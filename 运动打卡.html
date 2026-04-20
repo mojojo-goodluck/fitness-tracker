@@ -145,6 +145,10 @@
             color: white;
         }
 
+        .day-item.today {
+            border: 2px solid #667eea;
+        }
+
         .day-item.completed {
             background: #d4edda;
         }
@@ -416,6 +420,134 @@
             border-radius: 12px;
         }
 
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .history-btn {
+            font-size: 11px;
+            padding: 4px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-btn.edit {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .history-btn.edit:hover {
+            background: #ffe0b2;
+        }
+
+        .history-btn.delete {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .history-btn.delete:hover {
+            background: #ffcdd2;
+        }
+
+        /* 编辑弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .modal-exercises {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .modal-exercise-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-exercise-item:hover {
+            background: #e8e8e8;
+        }
+
+        .modal-exercise-item.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #e8e8e8;
+        }
+
+        .modal-btn.save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn.save:hover {
+            opacity: 0.9;
+        }
+
         /* 提示信息 */
         .toast {
             position: fixed;
@@ -555,12 +687,52 @@
             }
             
             .history-item {
-                padding: 8px;
+                padding: 10px 8px;
+                flex-wrap: wrap;
+            }
+            
+            .history-date {
+                min-width: 50px;
+                font-size: 11px;
+            }
+            
+            .history-exercises {
+                order: 3;
+                width: 100%;
+                margin-top: 8px;
+            }
+            
+            .history-actions {
+                margin-left: auto;
+            }
+            
+            .history-btn {
+                padding: 3px 8px;
+                font-size: 10px;
             }
             
             .section-title {
                 font-size: 14px;
                 margin-bottom: 8px;
+            }
+            
+            .modal {
+                padding: 20px;
+                width: 92%;
+            }
+            
+            .modal-title {
+                font-size: 16px;
+            }
+            
+            .modal-exercises {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .modal-exercise-item {
+                padding: 8px;
+                font-size: 13px;
             }
         }
         
@@ -607,7 +779,7 @@
                 <span class="streak-icon">🔥</span>
                 <div class="streak-text">
                     <div class="streak-count" id="streakDays">0 天</div>
-                    <div class="streak-label">连续打卡</div>
+                    <div class="streak-label">累计打卡</div>
                 </div>
             </div>
         </div>
@@ -657,10 +829,36 @@
         <div class="history">
             <div class="history-list" id="historyList"></div>
         </div>
+
+        <!-- 数据管理 -->
+        <div class="section-title">
+            <span>💾</span>
+            <span>数据管理</span>
+        </div>
+        <div class="quick-checkin" style="margin-bottom: 40px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="checkin-btn" style="flex: 1; font-size: 14px; padding: 12px;" onclick="exportData()">📤 导出数据</button>
+                <button class="checkin-btn" style="flex: 1; font-size: 14px; padding: 12px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(this)">
+                <button class="checkin-btn" style="flex: 1; font-size: 14px; padding: 12px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" onclick="clearAllData()">🗑️ 清空数据</button>
+            </div>
+        </div>
     </div>
 
     <!-- 提示 -->
     <div class="toast" id="toast"></div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-title">编辑打卡记录</div>
+            <div class="modal-exercises" id="modalExercises"></div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeEditModal()">取消</button>
+                <button class="modal-btn save" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // 运动项目配置（适合右手腕受伤用户）
@@ -690,9 +888,13 @@
         const achievements = [
             { id: 'first', name: '初次尝试', icon: '🌱', condition: (s) => s.totalWorkouts >= 1 },
             { id: 'week', name: '坚持一周', icon: '📅', condition: (s) => s.streakDays >= 7 },
-            { id: 'month', name: '月度达人', icon: '🌙', condition: (s) => s.streakDays >= 30 },
+            { id: 'month', name: '坚持一月', icon: '🌙', condition: (s) => s.streakDays >= 30 },
             { id: 'variety', name: '运动达人', icon: '🎯', condition: (s) => s.uniqueExercises >= 4 }
         ];
+
+        // 存储键名
+        const STORAGE_KEY = 'fitness_tracker_data';
+        const LAST_CHECKIN_DATE_KEY = 'fitness_tracker_last_date';
 
         // 状态管理
         let state = {
@@ -769,8 +971,8 @@
                 const isCompleted = state.completedDays.has(i);
                 
                 html += `
-                    <div class="day-item ${isToday ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
-                         onclick="selectDay(${i})">
+                    <div class="day-item ${isToday ? 'active today' : ''} ${isCompleted ? 'completed' : ''}" 
+                         onclick="selectDay(${i})" data-day="${i}">
                         <div class="day-name">${weekPlanTemplate[i].name}</div>
                         <div class="day-number">${dayNum}</div>
                         <div class="day-check">${isCompleted ? '✓' : ''}</div>
@@ -815,7 +1017,54 @@
         // 选择日期
         function selectDay(dayIndex) {
             const plan = weekPlanTemplate[dayIndex];
-            showToast(`${plan.name}计划：${plan.title}`);
+            const now = new Date();
+            const currentDay = now.getDay();
+            const isToday = dayIndex === currentDay;
+            
+            // 更新计划标题
+            document.getElementById('planTitle').textContent = plan.title;
+            
+            // 更新计划状态
+            const isCompleted = state.completedDays.has(dayIndex);
+            const statusEl = document.getElementById('planStatus');
+            if (isToday) {
+                statusEl.textContent = isCompleted ? '今日已完成' : '今日待完成';
+            } else {
+                statusEl.textContent = isCompleted ? '已完成' : '待完成';
+            }
+            statusEl.className = 'plan-status ' + (isCompleted ? 'completed' : '');
+            
+            // 更新运动列表
+            const exercisesEl = document.getElementById('planExercises');
+            exercisesEl.innerHTML = plan.exercises.map(exId => {
+                const ex = exercises.find(e => e.id === exId);
+                const isChecked = state.selectedExercises.has(exId);
+                return `
+                    <div class="plan-exercise-item">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleExercise('${exId}')">
+                        <span class="exercise-icon">${ex.icon}</span>
+                        <div class="exercise-info">
+                            <div class="exercise-name">${ex.name}</div>
+                            <div class="exercise-duration">${ex.duration}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 更新周历选中状态
+            document.querySelectorAll('.day-item').forEach((el, idx) => {
+                el.classList.remove('active');
+                if (idx === dayIndex) {
+                    el.classList.add('active');
+                } else if (idx === currentDay) {
+                    // 如果是今天，保持特殊标记
+                    el.classList.add('today');
+                }
+            });
+            
+            // 显示提示
+            showToast(`${plan.name}：${plan.title}`);
         }
 
         // 更新打卡按钮
@@ -848,7 +1097,10 @@
                 const minutes = parseInt(ex.duration.match(/\d+/)[0]);
                 return sum + minutes;
             }, 0);
-            state.streakDays += 1;
+            // 累计打卡天数（每天只算一次）
+            if (!state.todayChecked) {
+                state.streakDays += 1;
+            }
             state.thisWeek += 1;
             state.todayChecked = true;
             state.completedDays.add(currentDay);
@@ -868,6 +1120,7 @@
             }
             
             saveState();
+            recordCheckinDate();
             updateStats();
             renderWeekDays();
             renderDayPlan();
@@ -900,6 +1153,10 @@
             }).join('');
         }
 
+        // 当前编辑的记录索引
+        let editingIndex = -1;
+        let editingExercises = new Set();
+
         // 渲染历史记录
         function renderHistory() {
             const list = document.getElementById('historyList');
@@ -908,14 +1165,123 @@
                 return;
             }
             
-            list.innerHTML = state.history.map(h => `
+            list.innerHTML = state.history.map((h, index) => `
                 <div class="history-item">
                     <div class="history-date">${h.date}</div>
                     <div class="history-exercises">
                         ${h.exercises.map(ex => `<span class="history-tag">${ex}</span>`).join('')}
                     </div>
+                    <div class="history-actions">
+                        <button class="history-btn edit" onclick="editRecord(${index})">修改</button>
+                        <button class="history-btn delete" onclick="deleteRecord(${index})">删除</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        // 编辑记录
+        function editRecord(index) {
+            editingIndex = index;
+            editingExercises = new Set(state.history[index].exercises);
+            
+            const modal = document.getElementById('editModal');
+            const container = document.getElementById('modalExercises');
+            
+            container.innerHTML = exercises.map(ex => `
+                <div class="modal-exercise-item ${editingExercises.has(ex.name) ? 'selected' : ''}" 
+                     onclick="toggleModalExercise('${ex.name}')">
+                    <span>${ex.icon}</span>
+                    <span>${ex.name}</span>
+                </div>
+            `).join('');
+            
+            modal.classList.add('show');
+        }
+
+        // 切换弹窗中的运动选择
+        function toggleModalExercise(exerciseName) {
+            if (editingExercises.has(exerciseName)) {
+                editingExercises.delete(exerciseName);
+            } else {
+                editingExercises.add(exerciseName);
+            }
+            
+            // 更新显示
+            const items = document.querySelectorAll('.modal-exercise-item');
+            items.forEach(item => {
+                const name = item.textContent.trim().substring(2);
+                if (editingExercises.has(name)) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // 保存编辑
+        function saveEdit() {
+            if (editingIndex === -1) return;
+            
+            if (editingExercises.size === 0) {
+                showToast('请至少选择一项运动');
+                return;
+            }
+            
+            state.history[editingIndex].exercises = Array.from(editingExercises);
+            
+            // 重新计算统计数据
+            recalcStats();
+            
+            renderHistory();
+            updateStats();
+            closeEditModal();
+            showToast('✓ 记录已更新');
+        }
+
+        // 关闭编辑弹窗
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            editingIndex = -1;
+            editingExercises = new Set();
+        }
+
+        // 删除记录
+        function deleteRecord(index) {
+            if (!confirm('确定要删除这条记录吗？')) return;
+            
+            state.history.splice(index, 1);
+            
+            // 重新计算统计数据
+            recalcStats();
+            
+            renderHistory();
+            updateStats();
+            showToast('✓ 记录已删除');
+        }
+
+        // 重新计算统计数据
+        function recalcStats() {
+            state.totalWorkouts = state.history.reduce((sum, h) => sum + h.exercises.length, 0);
+            state.totalMinutes = state.history.reduce((sum, h) => {
+                return sum + h.exercises.reduce((exSum, exName) => {
+                    const ex = exercises.find(e => e.name === exName);
+                    if (ex) {
+                        const minutes = parseInt(ex.duration.match(/\d+/)[0]);
+                        return exSum + minutes;
+                    }
+                    return exSum;
+                }, 0);
+            }, 0);
+            
+            // 计算本周完成
+            state.thisWeek = state.history.filter(h => {
+                // 简化为最近7天的记录
+                return true;
+            }).length;
+            
+            // 计算运动种类
+            const allExercises = new Set(state.history.flatMap(h => h.exercises));
+            state.uniqueExercises = allExercises.size;
         }
 
         // 显示提示
@@ -926,16 +1292,186 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
-        // 保存状态（使用内存存储，刷新会重置）
+        // 保存状态到本地存储
         function saveState() {
-            // 在实际应用中，这里应该使用 localStorage
-            // 但由于限制，我们使用内存存储
+            try {
+                const dataToSave = {
+                    totalWorkouts: state.totalWorkouts,
+                    totalMinutes: state.totalMinutes,
+                    streakDays: state.streakDays,
+                    thisWeek: state.thisWeek,
+                    uniqueExercises: state.uniqueExercises,
+                    history: state.history,
+                    completedDays: Array.from(state.completedDays)
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            } catch (e) {
+                console.warn('无法保存数据:', e);
+            }
         }
 
-        // 加载状态
+        // 加载状态从本地存储
         function loadState() {
-            // 初始化默认状态
-            state.uniqueExercises = new Set(state.history.flatMap(h => h.exercises)).size;
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    state.totalWorkouts = data.totalWorkouts || 0;
+                    state.totalMinutes = data.totalMinutes || 0;
+                    state.streakDays = data.streakDays || 0;
+                    state.thisWeek = data.thisWeek || 0;
+                    state.uniqueExercises = data.uniqueExercises || 0;
+                    state.history = data.history || [];
+                    state.completedDays = new Set(data.completedDays || []);
+                }
+                
+                // 检查是否是新的一天
+                checkNewDay();
+            } catch (e) {
+                console.warn('无法加载数据:', e);
+            }
+        }
+
+        // 检查是否是新的一天
+        function checkNewDay() {
+            const now = new Date();
+            const today = now.toDateString();
+            const lastCheckin = localStorage.getItem(LAST_CHECKIN_DATE_KEY);
+            
+            if (lastCheckin !== today) {
+                // 新的一天，重置今日状态
+                state.selectedExercises = new Set();
+                state.todayChecked = false;
+                
+                // 累计打卡天数不会重置，保留原值
+                
+                // 检查是否需要重置本周统计（周日）
+                if (now.getDay() === 0 && state.thisWeek > 0) {
+                    state.thisWeek = 0;
+                    state.completedDays = new Set();
+                }
+            } else {
+                // 同一天，恢复今日打卡状态
+                const todayRecord = state.history.find(h => {
+                    const recordDate = new Date();
+                    // 简化匹配，实际应该存储完整日期
+                    return h.date === now.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                });
+                
+                if (todayRecord) {
+                    state.todayChecked = true;
+                    todayRecord.exercises.forEach(exName => {
+                        const ex = exercises.find(e => e.name === exName);
+                        if (ex) state.selectedExercises.add(ex.id);
+                    });
+                }
+            }
+        }
+
+        // 记录今日打卡日期
+        function recordCheckinDate() {
+            const now = new Date();
+            localStorage.setItem(LAST_CHECKIN_DATE_KEY, now.toDateString());
+        }
+
+        // 导出数据
+        function exportData() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (!data) {
+                    showToast('暂无数据可导出');
+                    return;
+                }
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `运动打卡数据_${new Date().toLocaleDateString('zh-CN')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('✓ 数据已导出');
+            } catch (e) {
+                showToast('导出失败：' + e.message);
+            }
+        }
+
+        // 导入数据
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // 验证数据格式
+                    if (!data.history || !Array.isArray(data.history)) {
+                        throw new Error('数据格式不正确');
+                    }
+                    
+                    // 确认导入
+                    if (state.history.length > 0) {
+                        if (!confirm('导入将覆盖现有数据，是否继续？')) {
+                            input.value = '';
+                            return;
+                        }
+                    }
+                    
+                    // 恢复数据
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    
+                    // 重新加载
+                    loadState();
+                    renderWeekDays();
+                    renderDayPlan();
+                    renderExerciseGrid();
+                    renderAchievements();
+                    renderHistory();
+                    updateStats();
+                    
+                    showToast('✓ 数据导入成功');
+                } catch (err) {
+                    showToast('导入失败：' + err.message);
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // 清空所有数据
+        function clearAllData() {
+            if (!confirm('确定要清空所有打卡记录吗？此操作不可恢复！')) return;
+            if (!confirm('再次确认：所有数据将被删除，是否继续？')) return;
+            
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(LAST_CHECKIN_DATE_KEY);
+            
+            // 重置状态
+            state = {
+                selectedExercises: new Set(),
+                todayChecked: false,
+                totalWorkouts: 0,
+                totalMinutes: 0,
+                streakDays: 0,
+                thisWeek: 0,
+                uniqueExercises: 0,
+                history: [],
+                completedDays: new Set()
+            };
+            
+            renderWeekDays();
+            renderDayPlan();
+            renderExerciseGrid();
+            renderAchievements();
+            renderHistory();
+            updateStats();
+            
+            showToast('✓ 数据已清空');
         }
 
         // 启动
