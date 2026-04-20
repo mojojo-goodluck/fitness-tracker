@@ -1014,12 +1014,18 @@
             }).join('');
         }
 
+        // 当前查看的日期（用于区分今日打卡和其他日期的查看）
+        let viewingDay = null;
+
         // 选择日期
         function selectDay(dayIndex) {
             const plan = weekPlanTemplate[dayIndex];
             const now = new Date();
             const currentDay = now.getDay();
             const isToday = dayIndex === currentDay;
+            
+            // 记录当前查看的日期
+            viewingDay = dayIndex;
             
             // 更新计划标题
             document.getElementById('planTitle').textContent = plan.title;
@@ -1034,15 +1040,17 @@
             }
             statusEl.className = 'plan-status ' + (isCompleted ? 'completed' : '');
             
-            // 更新运动列表
+            // 更新运动列表 - 只有查看今日时才显示已选状态
             const exercisesEl = document.getElementById('planExercises');
             exercisesEl.innerHTML = plan.exercises.map(exId => {
                 const ex = exercises.find(e => e.id === exId);
-                const isChecked = state.selectedExercises.has(exId);
+                // 只有查看今日时才显示当前选中状态，其他日期默认未选中
+                const isChecked = isToday && state.selectedExercises.has(exId);
                 return `
                     <div class="plan-exercise-item">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} 
-                               onchange="toggleExercise('${exId}')">
+                               onchange="toggleExercise('${exId}')"
+                               ${!isToday ? 'disabled' : ''}>
                         <span class="exercise-icon">${ex.icon}</span>
                         <div class="exercise-info">
                             <div class="exercise-name">${ex.name}</div>
@@ -1064,7 +1072,7 @@
             });
             
             // 显示提示
-            showToast(`${plan.name}：${plan.title}`);
+            showToast(`${plan.name}：${plan.title}${!isToday ? '（仅查看）' : ''}`);
         }
 
         // 更新打卡按钮
