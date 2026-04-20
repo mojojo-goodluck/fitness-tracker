@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日运动打卡 - 健康习惯养成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* 头部区域 */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .date-display {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 统计卡片 */
+        .stats-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 12px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* 连续打卡火焰 */
+        .streak-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .streak-icon {
+            font-size: 32px;
+        }
+
+        .streak-text {
+            text-align: left;
+        }
+
+        .streak-count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .streak-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* 周计划区域 */
+        .section-title {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .week-plan {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .week-days {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .day-item {
+            text-align: center;
+            cursor: pointer;
+            padding: 8px 4px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .day-item:hover {
+            background: #f5f5f5;
+        }
+
+        .day-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .day-item.completed {
+            background: #d4edda;
+        }
+
+        .day-item.completed .day-name,
+        .day-item.completed .day-number {
+            color: #155724;
+        }
+
+        .day-name {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .day-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .day-check {
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .day-plan-detail {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .plan-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .plan-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .plan-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .plan-exercises {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .plan-exercise-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .plan-exercise-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .plan-exercise-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .exercise-icon {
+            font-size: 20px;
+        }
+
+        .exercise-info {
+            flex: 1;
+        }
+
+        .exercise-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .exercise-duration {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* 快速打卡区域 */
+        .quick-checkin {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .exercise-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            border-radius: 16px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .exercise-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .exercise-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .exercise-card.selected .exercise-card-duration {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .exercise-card-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .exercise-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .exercise-card-duration {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* 打卡按钮 */
+        .checkin-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .checkin-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 成就区域 */
+        .achievements {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .achievement-item {
+            text-align: center;
+            padding: 12px 8px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+
+        .achievement-item.unlocked {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        }
+
+        .achievement-icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .achievement-name {
+            font-size: 10px;
+            color: #666;
+        }
+
+        /* 历史记录 */
+        .history {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .history-list {
+            margin-top: 16px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: #888;
+            min-width: 60px;
+        }
+
+        .history-exercises {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .history-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 12px;
+        }
+
+        /* 提示信息 */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 响应式 - 手机端优化 */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            /* 统计卡片紧凑 */
+            .stats-card {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            .streak-section {
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+            
+            .streak-count {
+                font-size: 20px;
+            }
+            
+            /* 周计划紧凑 */
+            .week-plan {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            
+            .day-item {
+                padding: 6px 2px;
+            }
+            
+            .day-number {
+                font-size: 14px;
+            }
+            
+            .day-name {
+                font-size: 10px;
+            }
+            
+            .day-plan-detail {
+                padding: 12px;
+            }
+            
+            /* 运动卡片紧凑 */
+            .quick-checkin {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            
+            .exercise-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            .exercise-card {
+                padding: 10px 4px;
+                border-radius: 12px;
+            }
+            
+            .exercise-card-icon {
+                font-size: 24px;
+                margin-bottom: 4px;
+            }
+            
+            .exercise-card-name {
+                font-size: 11px;
+                margin-bottom: 2px;
+            }
+            
+            .exercise-card-duration {
+                font-size: 9px;
+            }
+            
+            /* 成就紧凑 */
+            .achievements {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            
+            .achievement-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            .achievement-item {
+                padding: 8px 4px;
+            }
+            
+            .achievement-icon {
+                font-size: 24px;
+            }
+            
+            .achievement-name {
+                font-size: 9px;
+            }
+            
+            /* 历史记录紧凑 */
+            .history {
+                padding: 16px;
+            }
+            
+            .history-item {
+                padding: 8px;
+            }
+            
+            .section-title {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .exercise-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .exercise-card-name {
+                font-size: 10px;
+            }
+            
+            .achievement-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>💪 每日运动打卡</h1>
+            <div class="date-display" id="currentDate"></div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-card">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalWorkouts">0</div>
+                    <div class="stat-label">总运动次数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalMinutes">0</div>
+                    <div class="stat-label">总分钟数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="thisWeek">0</div>
+                    <div class="stat-label">本周完成</div>
+                </div>
+            </div>
+            <div class="streak-section">
+                <span class="streak-icon">🔥</span>
+                <div class="streak-text">
+                    <div class="streak-count" id="streakDays">0 天</div>
+                    <div class="streak-label">连续打卡</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 周计划 -->
+        <div class="section-title">
+            <span>📅</span>
+            <span>本周计划</span>
+        </div>
+        <div class="week-plan">
+            <div class="week-days" id="weekDays"></div>
+            <div class="day-plan-detail" id="dayPlanDetail">
+                <div class="plan-header">
+                    <span class="plan-title" id="planTitle">今日计划</span>
+                    <span class="plan-status" id="planStatus">待完成</span>
+                </div>
+                <div class="plan-exercises" id="planExercises"></div>
+            </div>
+        </div>
+
+        <!-- 快速打卡 -->
+        <div class="section-title">
+            <span>⚡</span>
+            <span>快速打卡</span>
+        </div>
+        <div class="quick-checkin">
+            <div class="exercise-grid" id="exerciseGrid"></div>
+            <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">
+                选择运动项目后打卡
+            </button>
+        </div>
+
+        <!-- 成就系统 -->
+        <div class="section-title">
+            <span>🏆</span>
+            <span>我的成就</span>
+        </div>
+        <div class="achievements">
+            <div class="achievement-grid" id="achievementGrid"></div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="section-title">
+            <span>📊</span>
+            <span>最近记录</span>
+        </div>
+        <div class="history">
+            <div class="history-list" id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 运动项目配置（适合右手腕受伤用户）
+        const exercises = [
+            { id: 'swim', name: '游泳', icon: '🏊', duration: '30-45分钟', intensity: 'high', wristSafe: true },
+            { id: 'cycle', name: '骑行', icon: '🚴', duration: '30-60分钟', intensity: 'medium', wristSafe: true },
+            { id: 'walk', name: '散步遛狗', icon: '🚶', duration: '20-40分钟', intensity: 'low', wristSafe: true },
+            { id: 'hike', name: '徒步', icon: '🥾', duration: '60-120分钟', intensity: 'high', wristSafe: true },
+            { id: 'dance', name: 'Switch舞蹈', icon: '🎮', duration: '20-30分钟', intensity: 'medium', wristSafe: true },
+            { id: 'baduanjin', name: '八段锦', icon: '🧘', duration: '15-20分钟', intensity: 'low', wristSafe: true },
+            { id: 'health', name: '健康操跟练', icon: '📺', duration: '20-40分钟', intensity: 'medium', wristSafe: true },
+            { id: 'stretch', name: '肩颈操', icon: '💆', duration: '10-15分钟', intensity: 'low', wristSafe: true }
+        ];
+
+        // 周计划模板（肩颈操每两天一次，周一轻松，游泳/骑行/徒步机动安排）
+        const weekPlanTemplate = {
+            0: { name: '周日', exercises: ['dance', 'stretch'], title: '活力日 - 舞蹈+肩颈操' },
+            1: { name: '周一', exercises: ['walk', 'stretch'], title: '轻松日 - 散步遛狗+肩颈操' },
+            2: { name: '周二', exercises: ['baduanjin'], title: '养生日 - 八段锦' },
+            3: { name: '周三', exercises: ['health', 'stretch'], title: '跟练日 - 健康操+肩颈操' },
+            4: { name: '周四', exercises: ['dance'], title: '趣味日 - Switch舞蹈' },
+            5: { name: '周五', exercises: ['walk', 'stretch'], title: '轻松日 - 散步遛狗+肩颈操' },
+            6: { name: '周六', exercises: ['baduanjin'], title: '养生日 - 八段锦' }
+        };
+
+        // 成就配置
+        const achievements = [
+            { id: 'first', name: '初次尝试', icon: '🌱', condition: (s) => s.totalWorkouts >= 1 },
+            { id: 'week', name: '坚持一周', icon: '📅', condition: (s) => s.streakDays >= 7 },
+            { id: 'month', name: '月度达人', icon: '🌙', condition: (s) => s.streakDays >= 30 },
+            { id: 'variety', name: '运动达人', icon: '🎯', condition: (s) => s.uniqueExercises >= 4 }
+        ];
+
+        // 状态管理
+        let state = {
+            selectedExercises: new Set(),
+            todayChecked: false,
+            totalWorkouts: 0,
+            totalMinutes: 0,
+            streakDays: 0,
+            thisWeek: 0,
+            uniqueExercises: 0,
+            history: [],
+            completedDays: new Set()
+        };
+
+        // 初始化
+        function init() {
+            loadState();
+            updateDate();
+            renderExerciseGrid();
+            renderWeekDays();
+            renderDayPlan();
+            renderAchievements();
+            renderHistory();
+            updateStats();
+        }
+
+        // 更新日期显示
+        function updateDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+        }
+
+        // 渲染运动卡片
+        function renderExerciseGrid() {
+            const grid = document.getElementById('exerciseGrid');
+            grid.innerHTML = exercises.map(ex => `
+                <div class="exercise-card ${state.selectedExercises.has(ex.id) ? 'selected' : ''}" 
+                     onclick="toggleExercise('${ex.id}')">
+                    <div class="exercise-card-icon">${ex.icon}</div>
+                    <div class="exercise-card-name">${ex.name}</div>
+                    <div class="exercise-card-duration">${ex.duration}</div>
+                </div>
+            `).join('');
+            
+            updateCheckinButton();
+        }
+
+        // 切换运动选择
+        function toggleExercise(id) {
+            if (state.selectedExercises.has(id)) {
+                state.selectedExercises.delete(id);
+            } else {
+                state.selectedExercises.add(id);
+            }
+            renderExerciseGrid();
+        }
+
+        // 渲染周计划
+        function renderWeekDays() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - currentDay);
+            
+            const weekDaysEl = document.getElementById('weekDays');
+            let html = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(weekStart);
+                dayDate.setDate(weekStart.getDate() + i);
+                const dayNum = dayDate.getDate();
+                const isToday = i === currentDay;
+                const isCompleted = state.completedDays.has(i);
+                
+                html += `
+                    <div class="day-item ${isToday ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
+                         onclick="selectDay(${i})">
+                        <div class="day-name">${weekPlanTemplate[i].name}</div>
+                        <div class="day-number">${dayNum}</div>
+                        <div class="day-check">${isCompleted ? '✓' : ''}</div>
+                    </div>
+                `;
+            }
+            
+            weekDaysEl.innerHTML = html;
+        }
+
+        // 渲染当日计划详情
+        function renderDayPlan() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const plan = weekPlanTemplate[currentDay];
+            
+            document.getElementById('planTitle').textContent = plan.title;
+            
+            const isCompleted = state.completedDays.has(currentDay);
+            const statusEl = document.getElementById('planStatus');
+            statusEl.textContent = isCompleted ? '已完成' : '待完成';
+            statusEl.className = 'plan-status ' + (isCompleted ? 'completed' : '');
+            
+            const exercisesEl = document.getElementById('planExercises');
+            exercisesEl.innerHTML = plan.exercises.map(exId => {
+                const ex = exercises.find(e => e.id === exId);
+                const isChecked = state.selectedExercises.has(exId);
+                return `
+                    <div class="plan-exercise-item">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleExercise('${exId}')">
+                        <span class="exercise-icon">${ex.icon}</span>
+                        <div class="exercise-info">
+                            <div class="exercise-name">${ex.name}</div>
+                            <div class="exercise-duration">${ex.duration}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 选择日期
+        function selectDay(dayIndex) {
+            const plan = weekPlanTemplate[dayIndex];
+            showToast(`${plan.name}计划：${plan.title}`);
+        }
+
+        // 更新打卡按钮
+        function updateCheckinButton() {
+            const btn = document.getElementById('checkinBtn');
+            const count = state.selectedExercises.size;
+            if (count === 0) {
+                btn.textContent = '选择运动项目后打卡';
+                btn.disabled = true;
+            } else if (state.todayChecked) {
+                btn.textContent = '今日已打卡 ✓';
+                btn.disabled = true;
+            } else {
+                btn.textContent = `打卡 ${count} 项运动`;
+                btn.disabled = false;
+            }
+        }
+
+        // 执行打卡
+        function doCheckin() {
+            if (state.selectedExercises.size === 0 || state.todayChecked) return;
+            
+            const now = new Date();
+            const currentDay = now.getDay();
+            
+            // 更新统计
+            state.totalWorkouts += state.selectedExercises.size;
+            state.totalMinutes += Array.from(state.selectedExercises).reduce((sum, id) => {
+                const ex = exercises.find(e => e.id === id);
+                const minutes = parseInt(ex.duration.match(/\d+/)[0]);
+                return sum + minutes;
+            }, 0);
+            state.streakDays += 1;
+            state.thisWeek += 1;
+            state.todayChecked = true;
+            state.completedDays.add(currentDay);
+            
+            // 记录历史
+            const selectedNames = Array.from(state.selectedExercises).map(id => 
+                exercises.find(e => e.id === id).name
+            );
+            state.history.unshift({
+                date: now.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
+                exercises: selectedNames
+            });
+            
+            // 限制历史记录数量
+            if (state.history.length > 10) {
+                state.history = state.history.slice(0, 10);
+            }
+            
+            saveState();
+            updateStats();
+            renderWeekDays();
+            renderDayPlan();
+            renderAchievements();
+            renderHistory();
+            updateCheckinButton();
+            
+            showToast('🎉 打卡成功！继续保持！');
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('totalWorkouts').textContent = state.totalWorkouts;
+            document.getElementById('totalMinutes').textContent = state.totalMinutes;
+            document.getElementById('thisWeek').textContent = state.thisWeek;
+            document.getElementById('streakDays').textContent = state.streakDays + ' 天';
+        }
+
+        // 渲染成就
+        function renderAchievements() {
+            const grid = document.getElementById('achievementGrid');
+            grid.innerHTML = achievements.map(ach => {
+                const unlocked = ach.condition(state);
+                return `
+                    <div class="achievement-item ${unlocked ? 'unlocked' : ''}">
+                        <div class="achievement-icon">${ach.icon}</div>
+                        <div class="achievement-name">${ach.name}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 渲染历史记录
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (state.history.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">还没有记录，开始你的第一次运动吧！</div>';
+                return;
+            }
+            
+            list.innerHTML = state.history.map(h => `
+                <div class="history-item">
+                    <div class="history-date">${h.date}</div>
+                    <div class="history-exercises">
+                        ${h.exercises.map(ex => `<span class="history-tag">${ex}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // 保存状态（使用内存存储，刷新会重置）
+        function saveState() {
+            // 在实际应用中，这里应该使用 localStorage
+            // 但由于限制，我们使用内存存储
+        }
+
+        // 加载状态
+        function loadState() {
+            // 初始化默认状态
+            state.uniqueExercises = new Set(state.history.flatMap(h => h.exercises)).size;
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
