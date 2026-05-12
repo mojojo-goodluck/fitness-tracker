@@ -957,18 +957,15 @@
         function renderWeekDays() {
             const now = new Date();
             const currentDay = now.getDay();
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - currentDay);
             
             const weekDaysEl = document.getElementById('weekDays');
             let html = '';
             
             for (let i = 0; i < 7; i++) {
-                const dayDate = new Date(weekStart);
-                dayDate.setDate(weekStart.getDate() + i);
-                const dayNum = dayDate.getDate();
+                const dayDateStr = getWeekDayDate(i);
+                const dayNum = parseInt(dayDateStr.split('-')[2]);
                 const isToday = i === currentDay;
-                const isCompleted = state.completedDays.has(i);
+                const isCompleted = state.completedDays.has(dayDateStr);
                 
                 html += `
                     <div class="day-item ${isToday ? 'active today' : ''} ${isCompleted ? 'completed' : ''}" 
@@ -987,13 +984,14 @@
         function renderDayPlan() {
             const now = new Date();
             const currentDay = now.getDay();
+            const todayStr = getDateString(now);
             const plan = weekPlanTemplate[currentDay];
             
             document.getElementById('planTitle').textContent = plan.title;
             
-            const isCompleted = state.completedDays.has(currentDay);
+            const isCompleted = state.completedDays.has(todayStr);
             const statusEl = document.getElementById('planStatus');
-            statusEl.textContent = isCompleted ? '已完成' : '待完成';
+            statusEl.textContent = isCompleted ? '今日已完成' : '今日待完成';
             statusEl.className = 'plan-status ' + (isCompleted ? 'completed' : '');
             
             const exercisesEl = document.getElementById('planExercises');
@@ -1014,43 +1012,82 @@
             }).join('');
         }
 
-        // 当前查看的日期（用于区分今日打卡和其他日期的查看）
-        let viewingDay = null;
+        // 辅助函数：日期转 YYYY-MM-DD 字符串
+        function getDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // 当前查看的日期（格式：YYYY-MM-DD，null 表示今日）
+        let viewingDate = null;
+
+        // 验证是否是有效的 YYYY-MM-DD 日期字符串
+        function isValidDateString(str) {
+            return /^\d{4}-\d{2}-\d{2}$/.test(str);
+        }
+
+        // 获取本周某天的日期字符串
+        function getWeekDayDate(dayIndex) {
+            const now = new Date();
+            const currentDay = now.getDay(); // 今天是周几 (0-6)
+            const diff = dayIndex - currentDay; // 目标日期与今天相差几天
+            
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + diff);
+            targetDate.setHours(0, 0, 0, 0);
+            
+            return getDateString(targetDate);
+        }
 
         // 选择日期
         function selectDay(dayIndex) {
             const plan = weekPlanTemplate[dayIndex];
             const now = new Date();
             const currentDay = now.getDay();
+            const dayDateStr = getWeekDayDate(dayIndex);
             const isToday = dayIndex === currentDay;
             
             // 记录当前查看的日期
-            viewingDay = dayIndex;
+            viewingDate = isToday ? null : dayDateStr;
+            
+            // 清空当前选中状态
+            state.selectedExercises = new Set();
+            
+            // 如果是今日且已打卡，恢复今日已选的运动
+            if (isToday) {
+                const todayRecord = state.history.find(h => h.fullDate === dayDateStr);
+                if (todayRecord) {
+                    todayRecord.exercises.forEach(exName => {
+                        const ex = exercises.find(e => e.name === exName);
+                        if (ex) state.selectedExercises.add(ex.id);
+                    });
+                }
+            }
             
             // 更新计划标题
             document.getElementById('planTitle').textContent = plan.title;
             
             // 更新计划状态
-            const isCompleted = state.completedDays.has(dayIndex);
+            const isCompleted = state.completedDays.has(dayDateStr);
             const statusEl = document.getElementById('planStatus');
             if (isToday) {
                 statusEl.textContent = isCompleted ? '今日已完成' : '今日待完成';
             } else {
-                statusEl.textContent = isCompleted ? '已完成' : '待完成';
+                statusEl.textContent = isCompleted ? '该日已完成' : '待补录';
             }
             statusEl.className = 'plan-status ' + (isCompleted ? 'completed' : '');
             
-            // 更新运动列表 - 只有查看今日时才显示已选状态
+            // 更新运动列表
             const exercisesEl = document.getElementById('planExercises');
             exercisesEl.innerHTML = plan.exercises.map(exId => {
                 const ex = exercises.find(e => e.id === exId);
-                // 只有查看今日时才显示当前选中状态，其他日期默认未选中
-                const isChecked = isToday && state.selectedExercises.has(exId);
+                const isChecked = state.selectedExercises.has(exId);
                 return `
                     <div class="plan-exercise-item">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} 
-                               onchange="toggleExercise('${exId}')"
-                               ${!isToday ? 'disabled' : ''}>
+                               onchange="toggleExercise('${exId}')">
                         <span class="exercise-icon">${ex.icon}</span>
                         <div class="exercise-info">
                             <div class="exercise-name">${ex.name}</div>
@@ -1066,37 +1103,61 @@
                 if (idx === dayIndex) {
                     el.classList.add('active');
                 } else if (idx === currentDay) {
-                    // 如果是今天，保持特殊标记
                     el.classList.add('today');
                 }
             });
             
+            // 更新打卡按钮和运动卡片
+            updateCheckinButton();
+            renderExerciseGrid();
+            
             // 显示提示
-            showToast(`${plan.name}：${plan.title}${!isToday ? '（仅查看）' : ''}`);
+            if (isToday) {
+                showToast(`${plan.name}：${plan.title}`);
+            } else if (isCompleted) {
+                showToast(`${plan.name}：该日已打卡，可继续补录其他运动`);
+            } else {
+                showToast(`${plan.name}：${plan.title}（补录模式）`);
+            }
         }
 
         // 更新打卡按钮
         function updateCheckinButton() {
             const btn = document.getElementById('checkinBtn');
             const count = state.selectedExercises.size;
+            const targetDate = viewingDate || getDateString(new Date());
+            const isCompleted = state.completedDays.has(targetDate);
+            const isToday = !viewingDate;
+            
             if (count === 0) {
                 btn.textContent = '选择运动项目后打卡';
                 btn.disabled = true;
-            } else if (state.todayChecked) {
+            } else if (isCompleted && isToday) {
                 btn.textContent = '今日已打卡 ✓';
                 btn.disabled = true;
+            } else if (isCompleted && !isToday) {
+                btn.textContent = `补录 ${count} 项运动`;
+                btn.disabled = false;
             } else {
-                btn.textContent = `打卡 ${count} 项运动`;
+                btn.textContent = isToday ? `打卡 ${count} 项运动` : `补录 ${count} 项运动`;
                 btn.disabled = false;
             }
         }
 
-        // 执行打卡
+        // 执行打卡（支持今日打卡和历史补录）
         function doCheckin() {
-            if (state.selectedExercises.size === 0 || state.todayChecked) return;
+            if (state.selectedExercises.size === 0) return;
             
             const now = new Date();
-            const currentDay = now.getDay();
+            const todayStr = getDateString(now);
+            const isToday = !viewingDate;
+            const targetDate = viewingDate || todayStr;
+            const targetDayIndex = isToday ? now.getDay() : new Date(viewingDate).getDay();
+            
+            // 检查是否重复打卡同一天
+            if (state.completedDays.has(targetDate) && isToday) {
+                return;
+            }
             
             // 更新统计
             state.totalWorkouts += state.selectedExercises.size;
@@ -1105,22 +1166,44 @@
                 const minutes = parseInt(ex.duration.match(/\d+/)[0]);
                 return sum + minutes;
             }, 0);
-            // 累计打卡天数（每天只算一次）
-            if (!state.todayChecked) {
+            
+            // 累计打卡天数（新日期才累计）
+            if (!state.completedDays.has(targetDate)) {
                 state.streakDays += 1;
             }
-            state.thisWeek += 1;
-            state.todayChecked = true;
-            state.completedDays.add(currentDay);
+            
+            // 本周统计（只算本周内的日期）
+            const currentWeekStart = new Date(now);
+            currentWeekStart.setDate(now.getDate() - now.getDay());
+            const targetDateObj = new Date(targetDate);
+            if (targetDateObj >= currentWeekStart && targetDateObj <= now) {
+                state.thisWeek += 1;
+            }
+            
+            if (isToday) {
+                state.todayChecked = true;
+            }
+            state.completedDays.add(targetDate);
             
             // 记录历史
             const selectedNames = Array.from(state.selectedExercises).map(id => 
                 exercises.find(e => e.id === id).name
             );
-            state.history.unshift({
-                date: now.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
-                exercises: selectedNames
-            });
+            
+            // 查找是否已有该日期的记录，有则合并，无则新增
+            const existingIndex = state.history.findIndex(h => h.fullDate === targetDate);
+            if (existingIndex >= 0) {
+                // 合并运动项目（去重）
+                const existingExercises = new Set(state.history[existingIndex].exercises);
+                selectedNames.forEach(name => existingExercises.add(name));
+                state.history[existingIndex].exercises = Array.from(existingExercises);
+            } else {
+                state.history.unshift({
+                    date: targetDateObj.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
+                    fullDate: targetDate,
+                    exercises: selectedNames
+                });
+            }
             
             // 限制历史记录数量
             if (state.history.length > 10) {
@@ -1128,7 +1211,9 @@
             }
             
             saveState();
-            recordCheckinDate();
+            if (isToday) {
+                recordCheckinDate();
+            }
             updateStats();
             renderWeekDays();
             renderDayPlan();
@@ -1136,7 +1221,11 @@
             renderHistory();
             updateCheckinButton();
             
-            showToast('🎉 打卡成功！继续保持！');
+            if (isToday) {
+                showToast('🎉 打卡成功！继续保持！');
+            } else {
+                showToast(`🎉 ${targetDate} 补录成功！`);
+            }
         }
 
         // 更新统计数据
@@ -1281,10 +1370,16 @@
                 }, 0);
             }, 0);
             
-            // 计算本周完成
+            // 计算本周完成（基于当前周）
+            const now = new Date();
+            const weekStartStr = getWeekDayDate(0); // 本周日的日期字符串
+            const currentWeekStart = new Date(weekStartStr);
+            currentWeekStart.setHours(0, 0, 0, 0);
+            
             state.thisWeek = state.history.filter(h => {
-                // 简化为最近7天的记录
-                return true;
+                if (!h.fullDate) return false;
+                const recordDate = new Date(h.fullDate);
+                return recordDate >= currentWeekStart && recordDate <= now;
             }).length;
             
             // 计算运动种类
@@ -1330,7 +1425,20 @@
                     state.thisWeek = data.thisWeek || 0;
                     state.uniqueExercises = data.uniqueExercises || 0;
                     state.history = data.history || [];
-                    state.completedDays = new Set(data.completedDays || []);
+                    
+                    // 清理 completedDays：过滤掉旧格式（数字或非日期字符串）
+                    const rawCompletedDays = data.completedDays || [];
+                    const validCompletedDays = rawCompletedDays.filter(d => isValidDateString(d));
+                    state.completedDays = new Set(validCompletedDays);
+                    
+                    // 为旧记录补充 fullDate 字段（从 date 字段推断）
+                    const now = new Date();
+                    state.history.forEach((h, idx) => {
+                        if (!h.fullDate && h.date) {
+                            // 尝试从 date 字段（如 "5月11日"）推断年份
+                            h.fullDate = getDateString(now); // 先用今天作为占位，后续用户可手动修正
+                        }
+                    });
                 }
                 
                 // 检查是否是新的一天
@@ -1344,34 +1452,31 @@
         function checkNewDay() {
             const now = new Date();
             const today = now.toDateString();
+            const todayStr = getDateString(now);
             const lastCheckin = localStorage.getItem(LAST_CHECKIN_DATE_KEY);
             
             if (lastCheckin !== today) {
                 // 新的一天，重置今日状态
                 state.selectedExercises = new Set();
                 state.todayChecked = false;
-                
-                // 累计打卡天数不会重置，保留原值
+                viewingDate = null;
                 
                 // 检查是否需要重置本周统计（周日）
-                if (now.getDay() === 0 && state.thisWeek > 0) {
+                if (now.getDay() === 0) {
                     state.thisWeek = 0;
-                    state.completedDays = new Set();
                 }
             } else {
                 // 同一天，恢复今日打卡状态
-                const todayRecord = state.history.find(h => {
-                    const recordDate = new Date();
-                    // 简化匹配，实际应该存储完整日期
-                    return h.date === now.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-                });
+                const todayRecord = state.history.find(h => h.fullDate === todayStr);
                 
-                if (todayRecord) {
+                if (todayRecord || state.completedDays.has(todayStr)) {
                     state.todayChecked = true;
-                    todayRecord.exercises.forEach(exName => {
-                        const ex = exercises.find(e => e.name === exName);
-                        if (ex) state.selectedExercises.add(ex.id);
-                    });
+                    if (todayRecord) {
+                        todayRecord.exercises.forEach(exName => {
+                            const ex = exercises.find(e => e.name === exName);
+                            if (ex) state.selectedExercises.add(ex.id);
+                        });
+                    }
                 }
             }
         }
@@ -1471,6 +1576,7 @@
                 history: [],
                 completedDays: new Set()
             };
+            viewingDate = null;
             
             renderWeekDays();
             renderDayPlan();
